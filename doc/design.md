@@ -106,7 +106,7 @@
 - [x] 音频采集模块（portaudio-go）
 - [x] 音频播放模块（portaudio-go）
 - [x] 音频数据持久化存储
-- [ ] VAD 客户端模块（与 Python VAD 服务通信）
+- [x] VAD 客户端模块（与 Python VAD 服务通信）
 - [ ] ASR模块（Whisper API 调用）
 - [ ] LLM模块（GPT API 调用）
 - [ ] TTS模块（TTS API 调用）
@@ -116,7 +116,7 @@
 ### 4. 测试与调优
 - [x] 音频采集与播放测试
 - [x] 音频数据持久化测试
-- [ ] VAD 功能测试
+- [x] VAD 功能测试
 - [ ] ASR 功能测试
 - [ ] LLM 功能测试
 - [ ] TTS 功能测试
