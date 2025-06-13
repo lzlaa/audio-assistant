@@ -25,33 +25,41 @@
 1. **音频采集模块**  
    - 负责从本地麦克风实时采集音频流。
    - 技术选型：Go + [portaudio-go](https://github.com/gordonklaus/portaudio)
+   - 状态：✅ 已完成
 
 2. **VAD模块（Silero VAD）**  
    - 检测音频流中何时开始/结束说话。
    - 技术选型：Go 调用 Python Silero VAD（通过 gRPC/HTTP/子进程通信）
+   - 状态：⏳ 待实现
 
 3. **ASR模块（Whisper）**  
    - 将检测到的语音片段发送到 OpenAI Whisper API，获取文本。
    - 技术选型：Go HTTP 客户端
+   - 状态：⏳ 待实现
 
 4. **LLM模块（GPT）**  
    - 将识别到的文本发送到 OpenAI GPT API，获取回复文本。
    - 技术选型：Go HTTP 客户端
+   - 状态：⏳ 待实现
 
 5. **TTS模块**  
    - 将回复文本发送到 TTS API，获取语音音频。
    - 技术选型：Go HTTP 客户端
+   - 状态：⏳ 待实现
 
 6. **音频播放模块**  
    - 播放助手回复的音频。
    - 技术选型：Go + portaudio-go
+   - 状态：✅ 已完成
 
 7. **打断控制模块**  
    - 检测用户是否在助手说话时插话，若有则立即停止播放并重新进入识别流程。
    - 技术选型：Go 协程、通道、状态机
+   - 状态：✅ 已完成
 
 8. **主控流程/状态机**  
    - 协调各模块，保证流程顺畅，处理异常和状态切换。
+   - 状态：✅ 已完成
 
 ---
 
@@ -84,9 +92,9 @@
 ## 六、TODO List
 
 ### 1. 环境准备
-- [ ] 安装 Go 环境
-- [ ] 安装 Python 环境
-- [ ] 安装 portaudio（Go 和 Python 都需）
+- [x] 安装 Go 环境
+- [x] 安装 Python 环境
+- [x] 安装 portaudio（Go 和 Python 都需）
 - [ ] 注册 OpenAI API Key
 - [ ] 下载/准备 Silero VAD Python 脚本
 
@@ -95,24 +103,33 @@
 - [ ] 测试本地音频流通过 VAD 服务能正确检测说话段
 
 ### 3. Go 主程序
-- [ ] 音频采集模块（portaudio-go）
-- [ ] 音频播放模块（portaudio-go）
+- [x] 音频采集模块（portaudio-go）
+- [x] 音频播放模块（portaudio-go）
+- [x] 音频数据持久化存储
 - [ ] VAD 客户端模块（与 Python VAD 服务通信）
 - [ ] ASR模块（Whisper API 调用）
 - [ ] LLM模块（GPT API 调用）
 - [ ] TTS模块（TTS API 调用）
-- [ ] 打断控制模块（并发监听、状态切换）
-- [ ] 主控流程/状态机
+- [x] 打断控制模块（并发监听、状态切换）
+- [x] 主控流程/状态机
 
 ### 4. 测试与调优
-- [ ] 单元测试各模块
-- [ ] 集成测试整体流程
+- [x] 音频采集与播放测试
+- [x] 音频数据持久化测试
+- [ ] VAD 功能测试
+- [ ] ASR 功能测试
+- [ ] LLM 功能测试
+- [ ] TTS 功能测试
 - [ ] 打断功能测试
 - [ ] 性能与延迟优化
 
 ### 5. 文档与说明
-- [ ] 项目结构说明
-- [ ] 各模块功能说明
+- [x] 项目结构说明
+- [x] 音频模块功能说明
+- [ ] VAD 模块功能说明
+- [ ] ASR 模块功能说明
+- [ ] LLM 模块功能说明
+- [ ] TTS 模块功能说明
 - [ ] 环境搭建与运行说明
 - [ ] 常见问题与调试指南
 
@@ -123,35 +140,5 @@
 - 支持多语言
 - 支持本地 Whisper/LLM/TTS（如有算力）
 - 增加热词、上下文记忆等高级功能
-
-## 八、Windows 环境依赖与运行说明
-
-### 1. Python 依赖安装
-
-建议使用 Anaconda 或 Python 3.8+，推荐用虚拟环境。
-
-```bash
-# 安装依赖
-pip install torch==1.13.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
-pip install silero-vad flask soundfile
-```
-
-如遇 soundfile 安装报错，可先安装依赖：
-
-```bash
-pip install pipwin
-pipwin install soundfile
-```
-
-### 2. 运行 Silero VAD HTTP 服务
-
-```bash
-cd scripts
-python silero_vad.py
-```
-
-服务默认监听 5001 端口。
-
-### 3. 端口与防火墙
-
-如遇端口占用或防火墙拦截，请在 Windows 防火墙中放行 5001 端口。
+- 优化音频数据持久化存储（支持压缩、加密等）
+- 添加音频数据缓存机制，提高响应速度

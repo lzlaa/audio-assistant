@@ -1,28 +1,48 @@
 package main
 
 import (
+	"context"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"audio-assistant/internal/audio"
-	"audio-assistant/internal/vad"
-	"fmt"
+	"audio-assistant/internal/state"
 )
 
 func main() {
-	fmt.Println("采集 5 秒音频...")
-	audioData, err := audio.RecordAudio()
-	if err != nil {
-		fmt.Println("音频采集失败:", err)
-		return
-	}
-	fmt.Println("音频采集完成，调用 VAD 服务...")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	vadURL := "http://localhost:5001/vad"
-	ts, err := vad.CallVadService(audioData, vadURL)
+	// 创建状态管理器
+	stateManager := state.NewManager()
+
+	// 创建音频采集器
+	audioInput, err := audio.NewInput()
 	if err != nil {
-		fmt.Println("VAD 检测失败:", err)
-		return
+		log.Fatalf("Failed to create audio input: %v", err)
 	}
-	fmt.Println("VAD 检测结果：")
-	for i, t := range ts {
-		fmt.Printf("片段%d: start=%d, end=%d\n", i+1, t.Start, t.End)
+	defer audioInput.Close()
+
+	// 创建音频播放器
+	audioOutput, err := audio.NewOutput()
+	if err != nil {
+		log.Fatalf("Failed to create audio output: %v", err)
 	}
+	defer audioOutput.Close()
+
+	// 启动主循环
+	go func() {
+		if err := stateManager.Run(ctx, audioInput, audioOutput); err != nil {
+			log.Printf("Error in main loop: %v", err)
+		}
+	}()
+
+	// 等待中断信号
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	log.Println("Shutting down...")
 }

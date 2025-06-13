@@ -1,42 +1,77 @@
-# audio-assistant
+# Audio Assistant
 
-# Windows 下 Go 端 portaudio 依赖安装说明
+一个基于 Go 语言开发的语音助手项目。
 
-1. 安装 portaudio DLL
+## 功能特性
 
-- 推荐直接下载 [portaudio.dll](http://files.portaudio.com/download.html) 并放到 Windows 系统 PATH 路径下（如 C:\Windows\System32）。
-- 或用 Python 安装：
+- 实时语音采集
+- 语音活动检测 (VAD)
+- 语音识别 (ASR)
+- 大语言模型对话 (LLM)
+- 文本转语音 (TTS)
+- 实时语音播放
+- 打断机制
+
+## 环境要求
+
+- Go 1.18 或更高版本
+- PortAudio
+- Python 3.8+ (用于 VAD 服务)
+- OpenAI API Key
+
+## 安装依赖
+
+1. 安装 PortAudio:
 
 ```bash
-pip install pipwin
-pipwin install portaudio
+# macOS
+brew install portaudio
+
+# Windows
+# 下载并安装 PortAudio: https://www.portaudio.com/download.html
 ```
 
-2. 安装 Go 依赖
+2. 安装 Go 依赖:
 
 ```bash
-go get github.com/gordonklaus/portaudio
+go mod download
 ```
 
-如遇找不到 DLL 错误，请确认 portaudio.dll 已在 PATH 路径下。
+## 运行
 
-## 项目目录结构
+1. 启动 VAD 服务:
+
+```bash
+python scripts/vad_service.py
+```
+
+2. 运行主程序:
+
+```bash
+go run cmd/main.go
+```
+
+## 项目结构
 
 ```
-audio-assistant/
-├── cmd/                # 主程序入口
-│   └── main.go
-├── internal/
-│   ├── audio/          # 采集与播放
-│   ├── vad/            # VAD客户端
-│   ├── asr/            # Whisper API
-│   ├── llm/            # GPT API
-│   ├── tts/            # TTS API
-│   └── flow/           # 主控流程/状态机
-├── scripts/
-│   └── silero_vad.py   # Python VAD服务
-├── doc/
-│   └── design.md
-├── go.mod
-└── README.md
+.
+├── cmd/            # 主程序入口
+├── internal/       # 内部包
+│   ├── audio/     # 音频处理
+│   ├── vad/       # 语音活动检测
+│   ├── asr/       # 语音识别
+│   ├── llm/       # 大语言模型
+│   ├── tts/       # 文本转语音
+│   ├── interrupt/ # 打断控制
+│   └── state/     # 状态管理
+├── pkg/           # 公共包
+└── scripts/       # 脚本文件
 ```
+
+## 开发状态
+
+当前版本为 MVP，实现了基本的音频采集和播放功能。其他功能模块正在开发中。
+
+## 许可证
+
+MIT
