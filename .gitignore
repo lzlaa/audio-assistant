@@ -27,4 +27,23 @@ Thumbs.db
 
 # Environment variables
 .env
-.env.local 
+.env.local
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.python-version
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/

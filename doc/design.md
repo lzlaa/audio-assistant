@@ -29,8 +29,8 @@
 
 2. **VAD模块（Silero VAD）**  
    - 检测音频流中何时开始/结束说话。
-   - 技术选型：Go 调用 Python Silero VAD（通过 gRPC/HTTP/子进程通信）
-   - 状态：⏳ 待实现
+   - 技术选型：Go 调用 Python Silero VAD（通过 HTTP 通信）
+   - 状态：✅ 已完成
 
 3. **ASR模块（Whisper）**  
    - 将检测到的语音片段发送到 OpenAI Whisper API，获取文本。
@@ -99,8 +99,8 @@
 - [ ] 下载/准备 Silero VAD Python 脚本
 
 ### 2. VAD 服务
-- [ ] 用 Python 实现 Silero VAD 服务（gRPC/HTTP/子进程方式均可）
-- [ ] 测试本地音频流通过 VAD 服务能正确检测说话段
+- [x] 用 Python 实现 Silero VAD 服务（HTTP 方式）
+- [x] 测试本地音频流通过 VAD 服务能正确检测说话段
 
 ### 3. Go 主程序
 - [x] 音频采集模块（portaudio-go）
@@ -126,7 +126,7 @@
 ### 5. 文档与说明
 - [x] 项目结构说明
 - [x] 音频模块功能说明
-- [ ] VAD 模块功能说明
+- [x] VAD 模块功能说明
 - [ ] ASR 模块功能说明
 - [ ] LLM 模块功能说明
 - [ ] TTS 模块功能说明
