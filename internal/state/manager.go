@@ -97,15 +97,13 @@ func NewManager() *Manager {
 	}
 }
 
-func (m *Manager) Run(ctx context.Context, input *audio.Input, output *audio.Output) error {
+func (m *Manager) Run(ctx context.Context, input *audio.Input, output *audio.AudioOutput) error {
 	log.Println("Starting audio assistant...")
 
 	if err := input.Start(); err != nil {
 		return err
 	}
-	if err := output.Start(); err != nil {
-		return err
-	}
+	// 新的 AudioOutput 不需要显式启动
 
 	// 启动音频处理循环
 	go m.processAudio(ctx, input, output)
@@ -259,7 +257,7 @@ func (m *Manager) printStats() {
 		len(m.memBuffer), inputRate, outputRate, m.stats.DroppedChunks, m.stats.TotalBytesWritten, m.stats.TotalBytesRead)
 }
 
-func (m *Manager) processAudio(ctx context.Context, input *audio.Input, output *audio.Output) {
+func (m *Manager) processAudio(ctx context.Context, input *audio.Input, output *audio.AudioOutput) {
 	// 使用更短的采样间隔
 	ticker := time.NewTicker(time.Millisecond * 10) // 100Hz 的采样率
 	defer ticker.Stop()
@@ -329,9 +327,11 @@ func (m *Manager) processAudio(ctx context.Context, input *audio.Input, output *
 						break
 					}
 
-					if err := output.Write(audioData); err != nil {
-						log.Printf("Error writing audio chunk: %v", err)
-					}
+					// TODO: 更新为使用新的 AudioOutput API
+					// if err := output.PlaySamples(audioData); err != nil {
+					//	log.Printf("Error playing audio chunk: %v", err)
+					// }
+					log.Printf("Audio chunk ready for playback (length: %d)", len(audioData))
 				}
 
 				// 重置临时文件
@@ -360,4 +360,14 @@ func (m *Manager) setState(s State) {
 	if oldState != s {
 		log.Printf("State changed: %s -> %s", oldState, s)
 	}
+}
+
+// GetState 获取当前状态（公开方法）
+func (m *Manager) GetState() State {
+	return m.getState()
+}
+
+// SetState 设置状态（公开方法）
+func (m *Manager) SetState(s State) {
+	m.setState(s)
 }

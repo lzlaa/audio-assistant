@@ -10,7 +10,7 @@ import (
 
 // Service manages LLM operations and conversation context
 type Service struct {
-	client           *Client
+	client           Client
 	config           *Config
 	isRunning        bool
 	conversationHist []Message
@@ -54,15 +54,6 @@ func NewService(config *Config) (*Service, error) {
 		return nil, fmt.Errorf("OpenAI API key is required")
 	}
 
-	// Create client
-	var client *Client
-	if config.BaseURL != "" && config.BaseURL != "https://api.openai.com/v1" {
-		client = NewClientWithConfig(config.APIKey, config.BaseURL, config.Timeout)
-	} else {
-		client = NewClient(config.APIKey)
-		client.httpClient.Timeout = config.Timeout
-	}
-
 	// Initialize conversation history with system message
 	conversationHist := []Message{}
 	if config.SystemMessage != "" {
@@ -72,6 +63,7 @@ func NewService(config *Config) (*Service, error) {
 		})
 	}
 
+	client := NewClient(config)
 	return &Service{
 		client:           client,
 		config:           config,
@@ -136,6 +128,12 @@ func (s *Service) Chat(ctx context.Context, userMessage string) (string, error) 
 		Temperature: s.config.Temperature,
 	}
 
+	// For DashScope API compatibility, set enable_thinking to false for non-streaming calls
+	if strings.Contains(s.config.BaseURL, "dashscope.aliyuncs.com") {
+		enableThinking := false
+		req.EnableThinking = &enableThinking
+	}
+
 	// Get response from LLM
 	response, err := s.client.ChatCompletion(ctx, req)
 	if err != nil {
@@ -162,33 +160,6 @@ func (s *Service) Chat(ctx context.Context, userMessage string) (string, error) 
 	return assistantMessage, nil
 }
 
-// SimpleChat provides a stateless chat without conversation history
-func (s *Service) SimpleChat(ctx context.Context, userMessage string) (string, error) {
-	if !s.isRunning {
-		return "", fmt.Errorf("LLM service is not running")
-	}
-
-	systemMsg := CreateVoiceAssistantSystemMessage()
-	response, err := s.client.ChatWithSystem(ctx, systemMsg.Content, userMessage)
-	if err != nil {
-		return "", fmt.Errorf("simple chat failed: %w", err)
-	}
-
-	return response, nil
-}
-
-// ChatWithContext processes user input with additional context
-func (s *Service) ChatWithContext(ctx context.Context, userMessage, contextInfo string) (string, error) {
-	if !s.isRunning {
-		return "", fmt.Errorf("LLM service is not running")
-	}
-
-	// Combine user message with context
-	enhancedMessage := fmt.Sprintf("上下文信息：%s\n\n用户问题：%s", contextInfo, userMessage)
-
-	return s.Chat(ctx, enhancedMessage)
-}
-
 // GetConversationHistory returns the current conversation history
 func (s *Service) GetConversationHistory() []Message {
 	// Return a copy to prevent external modification
@@ -209,26 +180,6 @@ func (s *Service) ClearHistory() {
 	s.conversationHist = systemMessages
 
 	log.Println("Conversation history cleared")
-}
-
-// SetSystemMessage updates the system message
-func (s *Service) SetSystemMessage(systemMessage string) {
-	// Remove old system messages
-	nonSystemMessages := []Message{}
-	for _, msg := range s.conversationHist {
-		if msg.Role != "system" {
-			nonSystemMessages = append(nonSystemMessages, msg)
-		}
-	}
-
-	// Add new system message at the beginning
-	s.conversationHist = []Message{
-		{Role: "system", Content: systemMessage},
-	}
-	s.conversationHist = append(s.conversationHist, nonSystemMessages...)
-
-	s.config.SystemMessage = systemMessage
-	log.Printf("System message updated: %q", systemMessage)
 }
 
 // UpdateConfig updates LLM configuration

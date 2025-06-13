@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
@@ -16,30 +15,19 @@ type OpenAISDKClient struct {
 	client openai.Client
 }
 
-// NewOpenAISDKClient creates a new OpenAI SDK client
-func NewOpenAISDKClient(apiKey string) *OpenAISDKClient {
-	client := openai.NewClient(
-		option.WithAPIKey(apiKey),
-	)
+// NewClient creates a new OpenAI SDK client
+func NewClient(config *Config) *OpenAISDKClient {
 
-	return &OpenAISDKClient{
-		client: client,
-	}
-}
-
-// NewOpenAISDKClientWithConfig creates a new OpenAI SDK client with custom configuration
-func NewOpenAISDKClientWithConfig(apiKey, baseURL string, timeout time.Duration) *OpenAISDKClient {
 	opts := []option.RequestOption{
-		option.WithAPIKey(apiKey),
+		option.WithAPIKey(config.APIKey),
 	}
 
-	if baseURL != "" {
-		opts = append(opts, option.WithBaseURL(baseURL))
+	if config.BaseURL != "" {
+		opts = append(opts, option.WithBaseURL(config.BaseURL))
 	}
 
-	if timeout > 0 {
-		httpClient := &http.Client{Timeout: timeout}
-		opts = append(opts, option.WithHTTPClient(httpClient))
+	if config.Timeout > 0 {
+		opts = append(opts, option.WithHTTPClient(&http.Client{Timeout: config.Timeout}))
 	}
 
 	client := openai.NewClient(opts...)
@@ -173,30 +161,6 @@ func (c *OpenAISDKClient) SimpleChat(ctx context.Context, userMessage string) (s
 	return strings.TrimSpace(resp.Choices[0].Message.Content), nil
 }
 
-// ChatWithSystem provides a simple interface with system message
-func (c *OpenAISDKClient) ChatWithSystem(ctx context.Context, systemMessage, userMessage string) (string, error) {
-	req := &ChatRequest{
-		Model: "gpt-3.5-turbo",
-		Messages: []Message{
-			{Role: "system", Content: systemMessage},
-			{Role: "user", Content: userMessage},
-		},
-		MaxTokens:   1000,
-		Temperature: 0.7,
-	}
-
-	resp, err := c.ChatCompletion(ctx, req)
-	if err != nil {
-		return "", err
-	}
-
-	if len(resp.Choices) == 0 {
-		return "", fmt.Errorf("no response choices returned")
-	}
-
-	return strings.TrimSpace(resp.Choices[0].Message.Content), nil
-}
-
 // ChatWithHistory provides conversation with message history
 func (c *OpenAISDKClient) ChatWithHistory(ctx context.Context, messages []Message, userMessage string) (string, error) {
 	// Add user message to history
@@ -276,6 +240,3 @@ func (c *OpenAISDKClient) TruncateToTokenLimit(text string, maxTokens int) strin
 
 	return strings.Join(words[:maxWords], " ") + "..."
 }
-
-// Interface compatibility check
-var _ LLMInterface = (*OpenAISDKClient)(nil)

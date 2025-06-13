@@ -86,6 +86,13 @@ func LoadFromWAV(filename string) ([]float32, int, error) {
 	}
 	defer file.Close()
 
+	// Get file size for validation
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to get file info: %w", err)
+	}
+	fileSize := fileInfo.Size()
+
 	// Read header
 	var header WAVHeader
 	if err := binary.Read(file, binary.LittleEndian, &header); err != nil {
@@ -94,7 +101,8 @@ func LoadFromWAV(filename string) ([]float32, int, error) {
 
 	// Validate header
 	if string(header.ChunkID[:]) != "RIFF" || string(header.Format[:]) != "WAVE" {
-		return nil, 0, fmt.Errorf("invalid WAV file format")
+		return nil, 0, fmt.Errorf("invalid WAV file format: ChunkID=%s, Format=%s",
+			string(header.ChunkID[:]), string(header.Format[:]))
 	}
 
 	if header.AudioFormat != 1 {
@@ -105,14 +113,43 @@ func LoadFromWAV(filename string) ([]float32, int, error) {
 		return nil, 0, fmt.Errorf("unsupported bits per sample: %d (only 16-bit is supported)", header.BitsPerSample)
 	}
 
-	// Calculate number of samples
-	numSamples := int(header.Subchunk2Size) / (int(header.BitsPerSample) / 8)
+	// Validate data chunk size
+	expectedFileSize := int64(44 + header.Subchunk2Size) // Header + data
+	if fileSize < expectedFileSize {
+		// Adjust data size based on actual file size
+		actualDataSize := fileSize - 44
+		header.Subchunk2Size = uint32(actualDataSize)
+		fmt.Printf("Warning: WAV file smaller than expected. Expected: %d, Actual: %d, Adjusting data size to: %d\n",
+			expectedFileSize, fileSize, actualDataSize)
+	}
+
+	// Calculate number of samples based on actual data size
+	bytesPerSample := int(header.BitsPerSample) / 8
+	numSamples := int(header.Subchunk2Size) / bytesPerSample
+
+	// Validate that we have the expected amount of data
+	maxPossibleSamples := int(fileSize-44) / bytesPerSample
+	if numSamples > maxPossibleSamples {
+		numSamples = maxPossibleSamples
+		fmt.Printf("Warning: Adjusting sample count from %d to %d based on file size\n",
+			int(header.Subchunk2Size)/bytesPerSample, numSamples)
+	}
+
+	fmt.Printf("WAV file info: FileSize=%d, DataSize=%d, Channels=%d, SampleRate=%d, BitsPerSample=%d, NumSamples=%d\n",
+		fileSize, header.Subchunk2Size, header.NumChannels, header.SampleRate, header.BitsPerSample, numSamples)
+
 	audioData := make([]float32, numSamples)
 
-	// Read audio data
+	// Read audio data with better error handling
 	for i := 0; i < numSamples; i++ {
 		var sample int16
 		if err := binary.Read(file, binary.LittleEndian, &sample); err != nil {
+			if err.Error() == "EOF" {
+				// Handle EOF gracefully - truncate to actual samples read
+				fmt.Printf("Warning: EOF encountered at sample %d of %d. Truncating audio data.\n", i, numSamples)
+				audioData = audioData[:i]
+				break
+			}
 			return nil, 0, fmt.Errorf("failed to read audio sample %d: %w", i, err)
 		}
 

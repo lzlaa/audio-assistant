@@ -1,6 +1,7 @@
 package audio
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/gordonklaus/portaudio"
@@ -9,7 +10,7 @@ import (
 const (
 	sampleRate      = 16000
 	channels        = 1
-	framesPerBuffer = 1024
+	framesPerBuffer = 10240
 )
 
 type Input struct {
@@ -20,9 +21,10 @@ type Input struct {
 }
 
 func NewInput() (*Input, error) {
-	err := portaudio.Initialize()
-	if err != nil {
-		return nil, err
+	// 使用统一的音频管理器
+	manager := GetManager()
+	if err := manager.Initialize(); err != nil {
+		return nil, fmt.Errorf("failed to initialize audio system: %w", err)
 	}
 
 	input := &Input{
@@ -32,7 +34,8 @@ func NewInput() (*Input, error) {
 
 	stream, err := portaudio.OpenDefaultStream(channels, 0, float64(sampleRate), framesPerBuffer, input.buffer)
 	if err != nil {
-		return nil, err
+		manager.Terminate() // 清理
+		return nil, fmt.Errorf("failed to open input stream: %w", err)
 	}
 
 	input.stream = stream
@@ -67,8 +70,16 @@ func (i *Input) Read() ([]float32, error) {
 }
 
 func (i *Input) Close() error {
+	var err error
 	if i.stream != nil {
-		i.stream.Close()
+		err = i.stream.Close()
 	}
-	return portaudio.Terminate()
+
+	// 使用统一的音频管理器终止
+	manager := GetManager()
+	if termErr := manager.Terminate(); termErr != nil && err == nil {
+		err = termErr
+	}
+
+	return err
 }
