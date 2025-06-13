@@ -55,8 +55,8 @@ export OPENAI_API_KEY="your-openai-api-key"
 
 1. 启动 VAD 服务：
 ```bash
-cd vad_service
-python app.py
+cd scripts
+python vad_service.py
 ```
 
 2. 启动语音助手：
@@ -66,7 +66,7 @@ go run cmd/voice_assistant/main.go
 
 ### 测试单个组件
 
-- VAD 测试：`go run cmd/vad_example/main.go`
+- LLM 测试：`go run cmd/llm_example/main.go`
 - ASR 测试：`go run cmd/asr_example/main.go`  
 - TTS 测试：`go run cmd/tts_example/main.go`
 
@@ -87,11 +87,10 @@ go run cmd/voice_assistant/main.go
 └── scripts/       # 脚本文件
 ```
 
-## 使用示例
-
+## 运行示例
 ```
-export OPENAI_API_KEY="your-openai-api-key"
-go run cmd/voice_assistant/main.go
+~: export OPENAI_API_KEY="your-openai-api-key"
+~: go run cmd/voice_assistant/main.go
 
 2025/06/13 23:41:56 启动语音助手...
 2025/06/13 23:41:56 VAD 服务连接正常
@@ -125,4 +124,3 @@ WAV file analysis for /var/folders/63/l52f96md6pd54wmg1mr257br0000gn/T/audio_dec
 重采样: 24000 Hz (1165200 样本) -> 16000 Hz (776800 样本)
 🚫 检测到用户打断
 ```
-
