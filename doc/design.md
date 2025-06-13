@@ -123,3 +123,35 @@
 - 支持多语言
 - 支持本地 Whisper/LLM/TTS（如有算力）
 - 增加热词、上下文记忆等高级功能
+
+## 八、Windows 环境依赖与运行说明
+
+### 1. Python 依赖安装
+
+建议使用 Anaconda 或 Python 3.8+，推荐用虚拟环境。
+
+```bash
+# 安装依赖
+pip install torch==1.13.1+cpu -f https://download.pytorch.org/whl/torch_stable.html
+pip install silero-vad flask soundfile
+```
+
+如遇 soundfile 安装报错，可先安装依赖：
+
+```bash
+pip install pipwin
+pipwin install soundfile
+```
+
+### 2. 运行 Silero VAD HTTP 服务
+
+```bash
+cd scripts
+python silero_vad.py
+```
+
+服务默认监听 5001 端口。
+
+### 3. 端口与防火墙
+
+如遇端口占用或防火墙拦截，请在 Windows 防火墙中放行 5001 端口。
